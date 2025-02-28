@@ -131,8 +131,8 @@
 
 ;;; requirements
 
-;; for callf, assert, incf, remove-if, remove-if-not
-(require 'cl)
+;; for cl-callf, cl-assert, cl-incf, cl-remove-if, cl-remove-if-not
+(require 'cl-lib)
 
 ;;; declarations
 
@@ -333,7 +333,7 @@ History of input is kept in `minimal-session-saver-file-name-history'."
       (copy-file path (concat path "~") t))
     (condition-case nil
         (progn
-          (assert file-list)
+          (cl-assert file-list)
           (with-temp-file path
             (set-buffer-file-coding-system 'utf-8)
             (insert ";; minimal-session-saver data file. -*- coding: utf-8 -*-\n")
@@ -360,12 +360,12 @@ files.
 
 With universal prefix argument, enter PATH interactively."
   (interactive)
-  (callf or path minimal-session-saver-data-file)
+  (cl-callf or path minimal-session-saver-data-file)
   (when (or (consp current-prefix-arg)
             (eq path 'prompt))
     (setq path (minimal-session-saver-read-file-name "Store visited files to: " nil path)))
   (minimal-session-saver-mkdir-for-file path)
-  (callf or file-list (delq nil (mapcar 'buffer-file-name (buffer-list))))
+  (cl-callf or file-list (delq nil (mapcar 'buffer-file-name (buffer-list))))
   (when (or file-list (prog1 (y-or-n-p (propertize "Really store an empty list?" 'face 'highlight)) (message "")))
     (minimal-session-saver-write path file-list)
     (when (and (minimal-session-saver-called-interactively-p 'any)
@@ -380,13 +380,13 @@ Requires frame-bufs.el.
 
 When PATH is not supplied, prompts to enter value interactively."
   (interactive)
-  (assert (fboundp 'frame-bufs-associated-p) nil "Frame-bufs library not loaded")
-  (callf or path 'prompt)
+  (cl-assert (fboundp 'frame-bufs-associated-p) nil "Frame-bufs library not loaded")
+  (cl-callf or path 'prompt)
   (when (or (consp current-prefix-arg)
             (eq path 'prompt))
     (setq path (minimal-session-saver-read-file-name "Store visited files on frame to: " default-directory "")))
   (let ((file-list (delq nil (mapcar 'buffer-file-name
-                                     (remove-if-not 'frame-bufs-associated-p
+                                     (cl-remove-if-not 'frame-bufs-associated-p
                                                     (buffer-list))))))
     (let ((current-prefix-arg nil))
       (minimal-session-saver-store path file-list))
@@ -400,31 +400,31 @@ When PATH is not supplied, prompts to enter value interactively."
 
 With universal prefix argument, enter PATH interactively."
   (interactive)
-  (callf or path minimal-session-saver-data-file)
+  (cl-callf or path minimal-session-saver-data-file)
   (when (or (consp current-prefix-arg)
             (eq path 'prompt))
     (setq path (minimal-session-saver-read-file-name "Load visited files from: " nil path)))
   (let* ((file-list (minimal-session-saver-read path))
-         (nonexistent-list (remove-if 'file-exists-p
-                                      (remove-if 'file-remote-p file-list)))
-         (visiting-list (remove-if-not 'find-buffer-visiting file-list))
+         (nonexistent-list (cl-remove-if 'file-exists-p
+                                      (cl-remove-if 'file-remote-p file-list)))
+         (visiting-list (cl-remove-if-not 'find-buffer-visiting file-list))
          (reporter (make-progress-reporter "Visiting: " 0 (length file-list)))
          (counter 0)
          (warning ""))
     (unless file-list
       (error "Cannot read visited files at %s" path))
     (dolist (f file-list)
-      (progress-reporter-update reporter (incf counter))
+      (progress-reporter-update reporter (cl-incf counter))
       (find-file f))
     (progress-reporter-done reporter)
     (when (and (minimal-session-saver-called-interactively-p 'any)
                (not minimal-session-saver-less-feedback))
       (when visiting-list
-        (callf concat warning (format ", %s already open" (length visiting-list))))
+        (cl-callf concat warning (format ", %s already open" (length visiting-list))))
       (when nonexistent-list
-        (callf concat warning (format ", creating %s" (length nonexistent-list))))
+        (cl-callf concat warning (format ", creating %s" (length nonexistent-list))))
       (when (> (- (length file-list) (length visiting-list)) 25)
-        (callf concat warning " -- it may take a moment for hooks to run"))
+        (cl-callf concat warning " -- it may take a moment for hooks to run"))
       (message "Visited %s files%s" (length file-list) warning)
       (sit-for 1))))
 
@@ -436,8 +436,8 @@ Requires frame-bufs.el.
 
 When PATH is not supplied, prompts to enter value interactively."
   (interactive)
-  (assert (fboundp 'frame-bufs-associated-p) nil "Frame-bufs library not loaded")
-  (callf or path 'prompt)
+  (cl-assert (fboundp 'frame-bufs-associated-p) nil "Frame-bufs library not loaded")
+  (cl-callf or path 'prompt)
   (when (or (consp current-prefix-arg)
             (eq path 'prompt))
     (setq path (minimal-session-saver-read-file-name "Load visited files from: " default-directory "")))
@@ -461,8 +461,8 @@ With universal prefix argument, enter PATH interactively.
 BUFFER is optional, and defaults to the currently visited buffer.
 When BUFFER is not visiting a file, there is no effect."
   (interactive)
-  (callf or path minimal-session-saver-data-file)
-  (callf or buffer (current-buffer))
+  (cl-callf or path minimal-session-saver-data-file)
+  (cl-callf or buffer (current-buffer))
   (when (or (consp current-prefix-arg)
             (eq path 'prompt))
     (setq path (minimal-session-saver-read-file-name "Add to session listing at: " nil path)))
@@ -484,8 +484,8 @@ BUFFER is optional, and defaults to the currently visited buffer.
 When the BUFFER is not visiting a file, or is visiting a file
 which was not in the list, there is no effect."
   (interactive)
-  (callf or path minimal-session-saver-data-file)
-  (callf or buffer (current-buffer))
+  (cl-callf or path minimal-session-saver-data-file)
+  (cl-callf or buffer (current-buffer))
   (when (or (consp current-prefix-arg)
             (eq path 'prompt))
     (setq path (minimal-session-saver-read-file-name "Remove from session listing at: " nil path)))
@@ -511,13 +511,13 @@ the requested marker character.  Default is 0.
 
 This command can only be called from within a `buff-menu' buffer."
   (interactive)
-  (assert (eq major-mode 'Buffer-menu-mode) nil "Not in a buffer-menu buffer")
-  (callf or path minimal-session-saver-data-file)
+  (cl-assert (eq major-mode 'Buffer-menu-mode) nil "Not in a buffer-menu buffer")
+  (cl-callf or path minimal-session-saver-data-file)
   (when (or (consp current-prefix-arg)
             (eq path 'prompt))
     (setq path (minimal-session-saver-read-file-name "Read session listing from: " nil path)))
-  (callf or char (if (boundp 'buff-menu-marker-char) buff-menu-marker-char ?>))
-  (callf or col 0)
+  (cl-callf or char (if (boundp 'buff-menu-marker-char) buff-menu-marker-char ?>))
+  (cl-callf or col 0)
   (let ((inhibit-read-only t)
         (file-list (minimal-session-saver-read path))
         (counter 0))
@@ -526,7 +526,7 @@ This command can only be called from within a `buff-menu' buffer."
       (while (not (eobp))
         (when (and (Buffer-menu-buffer nil)
                    (member (buffer-file-name (Buffer-menu-buffer nil)) file-list))
-          (incf counter)
+          (cl-incf counter)
           (if (fboundp 'ucs-utils-subst-char-in-region)
               (ucs-utils-subst-char-in-region (+ col (point)) (+ 1 col (point)) (char-after (+ col (point))) char)
             (subst-char-in-region (+ col (point)) (+ 1 col (point)) (char-after (+ col (point))) char)))
@@ -566,7 +566,7 @@ This function has not effect unless the variable
 ;; byte-compile-warnings: (not cl-functions redefine)
 ;; End:
 ;;
-;; LocalWords: MinimalSessionSaver incf callf bufs MUSTMATCH devel
+;; LocalWords: MinimalSessionSaver cl-incf cl-callf bufs MUSTMATCH devel
 ;;
 
 ;;; minimal-session-saver.el ends here
